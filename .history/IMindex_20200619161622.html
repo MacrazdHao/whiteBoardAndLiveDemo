@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1,maximum-scale=1.0">
+  <link rel="stylesheet" href="https://sdk.herewhite.com/white-web-sdk/2.9.0.css">
+  <script src="https://sdk.herewhite.com/white-web-sdk/2.9.0.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.8/lib/index.css" />
+</head>
+
+<style>
+  .videoBox,
+  .video-placeholder {
+    width: 100%;
+    height: 300px;
+    position: relative;
+  }
+
+  .roomState {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+
+  .roomState p {
+    margin: 0;
+    margin-right: 10px;
+  }
+
+  .roomIdBox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .toolBox {
+    display: flex;
+  }
+
+  .toolBtn {
+    box-sizing: border-box;
+    width: 20%;
+    display: inline-block;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .noselected {
+    border: 1px solid rgb(15, 15, 15);
+    /* background: rgb(15, 15, 15); */
+  }
+
+  .selected {
+    border: 1px solid rgb(0, 89, 255);
+    background: rgb(0, 89, 255);
+    color: white;
+  }
+
+  .colorBtn {
+    border: 1px solid rgb(15, 15, 15);
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .colorBox {
+    display: flex;
+    justify-content: center;
+  }
+
+  .colorBtn {
+    height: 20px;
+    box-sizing: border-box;
+    width: 20%;
+    display: inline-block;
+    text-align: center;
+    font-size: 15px;
+  }
+
+  .black {
+    background: #000;
+  }
+
+  .red {
+    background: red;
+  }
+
+  .green {
+    background: green;
+  }
+
+  .blue {
+    background: blue;
+  }
+
+  .yellow {
+    background: yellow;
+  }
+
+  .sliderBtn {
+    width: 26px;
+    color: #fff;
+    font-size: 10px;
+    line-height: 18px;
+    text-align: center;
+    background-color: black;
+    border-radius: 100px;
+  }
+
+  .widthBox {
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .widthBox p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .widthSliderBox {
+    display: flex;
+    justify-content: center;
+    width: 70%;
+  }
+
+  .widthSliderBox .van-slider {
+    margin: auto;
+  }
+</style>
+
+<body>
+  <div id="app">
+    <div v-if="!showRoomList">
+      <div class="roomState">
+        <p>房间：{{roomName?roomName:'暂未加入房间'}}</p>
+        <div>
+          <van-button v-if="!roomName" size="mini" @click="getRoomList" style="padding: 0 10px;">房间列表</van-button>
+          <van-button v-if="roomName" size="mini" type="danger" @click="exitRoom">退出</van-button>
+          <van-button v-if="roomName&&myRoom" style="padding: 0 10px;" size="mini" type="primary" @click="changeMode">
+            {{desktopMode?'切换视频':'切换桌面'}}</van-button>
+          <van-button v-if="roomName" size="mini" type="primary" @click="changeIdentify">{{myRoom?'房主':'游客'}}
+          </van-button>
+        </div>
+      </div>
+      <van-field v-model="jRoomName" label="房间名称" placeholder="请输入房间名">
+        <template #button>
+          <van-button size="mini" type="primary" @click="createRoom">创建</van-button>
+        </template>
+      </van-field>
+      <van-field v-model="jRoomId" label="房间ID" placeholder="请输入房间ID">
+        <template #button>
+          <van-button size="mini" type="primary" @click="joinRoom">加入</van-button>
+        </template>
+      </van-field>
+      <div style="position: relative;border: 1px solid black">
+        <div id="whiteboard" :style="{opacity: opacityVal/100, width: '100%', height: '300px'}"></div>
+        <div
+          style="z-index: -1;position: absolute;top:0;left:0;background-color: yellowgreen;width: 100%;height: 300px;">
+        </div>
+      </div>
+    </div>
+    <div v-else>
+      <van-button type="primary" size="small" @click="showRoomList=false" style="width: 100%;">关闭</van-button>
+      <van-list v-model="loading" :finished="finished" finished-text="没有更多了">
+        <van-cell v-for="item in roomList" :key="item.uuid" :title="item.name?item.name:'无房间名'" value="进入" is-link
+          @click="joinRoomFromList(item)" />
+      </van-list>
+    </div>
+  </div>
+</body>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vant@2.8/lib/vant.min.js"></script>
+<script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-3.1.0.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: () => {
+      return {
+        widthVal: 4,
+        fontVal: 16,
+        loading: false,
+        finished: true,
+        showRoomList: false,
+        roomList: [],
+        whiteWebSdk: null,
+        sdkToken:
+          "NETLESSSDK_YWs9T2VYYWNoeG5DbjNIcUI4MSZub25jZT0xNTkyMzYyMDQ1MzA0MDAmcm9sZT0wJnNpZz0yYTc5OGQyNzFjOGFhMDIxZTM0NWI5MmE2YjY0ZjI2Y2I3YWViYjQ1MTY2MzFiNDJjYzdkYmMwYWY1NWY1N2Fi",
+        appIdentifier: "_4hHALBDEeqXLmEdE6HRLQ/_ODxqJt7hbHw9g",
+        jRoomId: '',
+        jRoomName: '',
+        roomName: '',
+        roomId: null,
+        roomToken: null,
+        myRoom: false,
+        room: null,
+        toolIndex: 1,
+        // 直播参数
+        rtc: {
+          client: null,
+          joined: false,
+          published: false,
+          localStream: null,
+          remoteStreams: [],
+          params: {}
+        },
+        option: {
+          appID: "cdef65f8639b49b4900cd8c1270bd0a8",
+          channel: "",
+          uid: null,
+          token: null
+        },
+        opacityVal: 100,
+        desktopMode: false,
+      }
+    },
+    mounted() {
+      // 初始化画板
+      this.whiteWebSdk = new WhiteWebSdk({
+        appIdentifier: this.appIdentifier,
+      });
+    },
+    methods: {
+      createRoom() {
+      },
+      joinRoom() {
+      },
+      changeIdentify() {
+      },
+      exitRoom() {
+        this.roomId = '';
+        this.roomName = '';
+      },
+    }
+  });
+</script>
+
+</html>
