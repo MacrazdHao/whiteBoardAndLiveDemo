@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1,maximum-scale=1.0">
+  <link rel="stylesheet" href="https://sdk.herewhite.com/white-web-sdk/2.9.0.css">
+  <script src="https://sdk.herewhite.com/white-web-sdk/2.9.0.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@2.8/lib/index.css" />
+  <!-- <link rel="stylesheet" href="https://raw.githubusercontent.com/AgoraIO/Basic-Video-Call/master/One-to-One-Video/Agora-Web-Tutorial-1to1/assets/common.css" /> -->
+</head>
+
+<style>
+  .videoBox,
+  .video-placeholder {
+    width: 480px;
+    height: 320px;
+    position: relative;
+  }
+</style>
+
+<body>
+  <div id="app">
+    <van-field v-model="option.channel" label="房间ID" placeholder="请输入房间ID">
+      <template #button>
+        <van-button size="mini" type="primary" @click="joinRoom">加入</van-button>
+      </template>
+    </van-field>
+    <div id="video">
+      <div class="videoBox">
+        <div id="local_stream" class="video-placeholder"></div>
+        <div id="local_video_info" class="video-profile hide"></div>
+        <div id="video_autoplay_local" class="autoplay-fallback hide"></div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vant@2.8/lib/vant.min.js"></script>
+<script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-3.1.0.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: () => {
+      return {
+        rtc: {
+          client: null,
+          joined: false,
+          published: false,
+          localStream: null,
+          remoteStreams: [],
+          params: {}
+        },
+        option: {
+          appID: "cdef65f8639b49b4900cd8c1270bd0a8",
+          channel: "demo",
+          uid: null,
+          token: null
+        },
+      }
+    },
+    mounted() {
+      this.rtc.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
+      this.rtc.params = this.option;
+
+      // 获取房间的他人窗口（多人直播窗口，或获取主播窗口）
+      this.rtc.client.on("stream-added", (evt) => {
+        let remoteStream = evt.stream
+        let id = remoteStream.getId()
+        if (id !== this.rtc.params.uid) {
+          this.rtc.client.subscribe(remoteStream, (err) => {
+            console.log("stream subscribe failed", err)
+          })
+        }
+        console.log("stream-added remote-uid: ", id)
+      })
+      // Occurs when a user subscribes to a remote stream.
+      this.rtc.client.on("stream-subscribed", (evt) => {
+        let remoteStream = evt.stream
+        let id = remoteStream.getId()
+        this.rtc.remoteStreams.push(remoteStream)
+        this.addView(id)
+        remoteStream.play("remote_video_" + id)
+        console.log("stream-subscribed remote-uid: ", id)
+      })
+      // Occurs when the remote stream is removed; for example, a peer user calls Client.unpublish.
+      this.rtc.client.on("stream-removed", (evt) => {
+        let remoteStream = evt.stream
+        let id = remoteStream.getId()
+        if (remoteStream.isPlaying()) {
+          remoteStream.stop()
+        }
+        this.rtc.remoteStreams = this.rtc.remoteStreams.filter((stream) => {
+          return stream.getId() !== id
+        })
+        this.removeView(id)
+        console.log("stream-removed remote-uid: ", id)
+      });
+
+      console.log(this.rtc)
+      this.rtc.client.init(this.option.appID, () => {
+        console.log("init success");
+      }, (err) => {
+        console.error(err);
+      });
+    },
+    methods: {
+      createElement(tag, id, className) {
+        let el = document.createElement(tag);
+        el.id = id;
+        el.className = className;
+        return el;
+      },
+      addView(id, show) {
+        console.log(document.querySelector("#" + id)[0])
+        if (!document.querySelector("#" + id)[0]) {
+          let videoDiv = document.getElementById("video");
+          let remote_video_panel = this.createElement("div", "remote_video_panel_" + id, "videoBox");
+          videoDiv.append(remote_video_panel);
+          // $("<div/>", {
+          //   id: "remote_video_panel_" + id,
+          //   class: "videoBox",
+          // }).appendTo("#video");
+
+          let remote_video = this.createElement("div", "remote_video_" + id, "video-placeholder");
+          remote_video_panel.append(remote_video);
+          // $("<div/>", {
+          //   id: "remote_video_" + id,
+          //   class: "video-placeholder",
+          // }).appendTo("#remote_video_panel_" + id);
+
+          let remote_video_info = this.createElement("div", "remote_video_info_" + id, "video-profile " + (show ? "" : "hide"));
+          remote_video_panel.append(remote_video_info);
+          // $("<div/>", {
+          //   id: "remote_video_info_" + id,
+          //   class: "video-profile " + (show ? "" : "hide"),
+          // }).appendTo("#remote_video_panel_" + id);
+
+          let video_autoplay = this.createElement("div", "video_autoplay_" + id, "autoplay-fallback hide");
+          remote_video_panel.append(video_autoplay);
+          // $("<div/>", {
+          //   id: "video_autoplay_" + id,
+          //   class: "autoplay-fallback hide",
+          // }).appendTo("#remote_video_panel_" + id);
+        }
+      },
+      removeView(id) {
+        if ($("#remote_video_panel_" + id)[0]) {
+          $("#remote_video_panel_" + id).remove();
+        }
+      },
+      joinRoomFromList(item) {
+      },
+      getRoomList() {
+      },
+      createRoom() {
+      },
+      joinRoom() {
+        // 加入房间
+        this.rtc.client.setClientRole("host");
+        this.rtc.client.join(this.option.token ? this.option.token : null, this.option.channel, this.option.uid ? +this.option.uid : null, (uid) => {
+          console.log("join channel: " + this.option.channel + " success, uid: " + uid);
+          this.rtc.joined = true;
+          this.rtc.params.uid = uid;
+          // 主播创建本地流
+          this.rtc.localStream = AgoraRTC.createStream({
+            streamID: this.rtc.params.uid,
+            audio: true,
+            video: true,
+            screen: false,
+          });
+          // 初始化本地流
+          this.rtc.localStream.init(() => {
+            console.log("init local stream success");
+            this.rtc.localStream.play("local_stream");
+            this.rtc.client.publish(this.rtc.localStream, (err) => {
+              console.log("publish failed");
+              console.error(err);
+            });
+            this.rtc.published = true;
+          }, (err) => {
+            console.error("init local stream failed ", err);
+          });
+        }, (err) => {
+          console.error("client join failed", err)
+        });
+      },
+      changeIdentify() {
+      },
+      exitRoom() {
+      },
+    }
+  });
+</script>
+
+</html>
