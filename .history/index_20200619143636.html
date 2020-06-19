@@ -454,6 +454,7 @@
           });
         });
       },
+
       initRTC(callback) {
         // 初始化直播
         this.rtc.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
@@ -483,7 +484,7 @@
             this.rtc.client.unpublish(this.rtc.localStream, (err) => {
               console.log("unpublish failed")
               console.error(err)
-            });
+            })
             this.rtc.published = false
           }
           this.addView(id)
@@ -503,13 +504,12 @@
           this.removeView(id)
           console.log("stream-removed remote-uid: ", id)
         });
-        // 房间有人退出
         this.rtc.client.on("peer-leave", (evt) => {
           const id = evt.uid;
           if (id != this.rtc.params.uid) {
-            this.removeView(id);
+            removeView(id);
           }
-          vant.Toast("user Id:" + id + " leave");
+          vant.Toast("peer leave");
           console.log('peer-leave', id);
         })
         this.rtc.client.init(this.option.appID, () => {
@@ -519,6 +519,7 @@
           console.error(err);
         });
       },
+
       changeMode() {
         if (this.rtc.published) {
           this.desktopMode = !this.desktopMode;
@@ -526,10 +527,6 @@
           this.rtc.localStream.stop();
           // Close the local stream
           this.rtc.localStream.close();
-          this.rtc.client.unpublish(this.rtc.localStream, (err) => {
-            console.log("unpublish failed")
-            console.error(err)
-          });
         }
         if (this.desktopMode) {
           this.rtc.localStream.setScreenProfile("720p_1");
@@ -537,7 +534,7 @@
         // 主播创建本地流
         this.rtc.localStream = AgoraRTC.createStream({
           streamID: this.rtc.params.uid,
-          audio: true,
+          audio: !this.desktopMode,
           video: !this.desktopMode,
           screen: this.desktopMode,
           screenAudio: this.desktopMode
@@ -560,12 +557,12 @@
             this.rtc.client.unpublish(this.rtc.localStream, (err) => {
               console.log("unpublish failed")
               console.error(err)
-            });
+            })
             this.rtc.published = false
             vant.Dialog.alert({
               title: '共享桌面失败',
               message: '当前房间已存在一位主播'
-            });
+            })
           }
         }, (err) => {
           console.error("init local stream failed ", err);
@@ -575,6 +572,7 @@
           });
         });
       },
+
       joinRTC() {
         this.option.channel = this.roomId;
         this.initRTC(() => {
@@ -597,6 +595,7 @@
           });
         });
       },
+
       exitRTC() {
         this.rtc.client.leave(() => {
           if (this.myRoom) {
@@ -613,10 +612,6 @@
             this.removeView(id);
           }
           console.log("client leaves channel success");
-          this.myRoom = false;
-          this.rtc.localStream = null
-          this.rtc.remoteStreams = []
-          this.rtc.client = null
           this.rtc.joined = false;
           this.rtc.published = false;
         }, (err) => {
@@ -624,6 +619,7 @@
           console.error(err);
         });
       },
+
       changeIdentify() {
         window.room.disconnect();
         this.exitRTC();

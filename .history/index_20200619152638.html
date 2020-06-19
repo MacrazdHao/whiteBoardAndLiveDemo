@@ -538,9 +538,9 @@
         this.rtc.localStream = AgoraRTC.createStream({
           streamID: this.rtc.params.uid,
           audio: true,
-          video: !this.desktopMode,
-          screen: this.desktopMode,
-          screenAudio: this.desktopMode
+          video: !this.desktopMode&&this.myRoom,
+          screen: this.desktopMode&&this.myRoom,
+          screenAudio: this.desktopMode&&this.myRoom
         });
         // 初始化本地流
         this.rtc.localStream.init(() => {
@@ -551,22 +551,22 @@
             console.error(err);
           });
           this.rtc.published = true;
-          console.log('视频数量：', this.rtc.remoteStreams.length)
-          if (this.rtc.remoteStreams.length > 0) {
-            // Stop playing the local stream
-            this.rtc.localStream.stop();
-            // Close the local stream
-            this.rtc.localStream.close();
-            this.rtc.client.unpublish(this.rtc.localStream, (err) => {
-              console.log("unpublish failed")
-              console.error(err)
-            });
-            this.rtc.published = false
-            vant.Dialog.alert({
-              title: '共享桌面失败',
-              message: '当前房间已存在一位主播'
-            });
-          }
+          // console.log('视频数量：', this.rtc.remoteStreams.length)
+          // if (this.rtc.remoteStreams.length > 0) {
+          //   // Stop playing the local stream
+          //   this.rtc.localStream.stop();
+          //   // Close the local stream
+          //   this.rtc.localStream.close();
+          //   this.rtc.client.unpublish(this.rtc.localStream, (err) => {
+          //     console.log("unpublish failed")
+          //     console.error(err)
+          //   });
+          //   this.rtc.published = false
+          //   vant.Dialog.alert({
+          //     title: '共享桌面失败',
+          //     message: '当前房间已存在一位主播'
+          //   });
+          // }
         }, (err) => {
           console.error("init local stream failed ", err);
           vant.Dialog.alert({
@@ -585,9 +585,9 @@
             this.rtc.joined = true;
             this.rtc.params.uid = uid;
             console.log('远程数量:', this.rtc.remoteStreams.length);
-            if (this.myRoom) {
+            // if (this.myRoom) {
               this.changeMode();
-            }
+            // }
           }, (err) => {
             console.error("client join failed", err)
             vant.Dialog.alert({

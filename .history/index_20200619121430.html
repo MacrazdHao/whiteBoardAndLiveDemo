@@ -454,7 +454,8 @@
           });
         });
       },
-      initRTC(callback) {
+
+      initRTC() {
         // 初始化直播
         this.rtc.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
         this.rtc.params = this.option;
@@ -483,7 +484,7 @@
             this.rtc.client.unpublish(this.rtc.localStream, (err) => {
               console.log("unpublish failed")
               console.error(err)
-            });
+            })
             this.rtc.published = false
           }
           this.addView(id)
@@ -503,22 +504,13 @@
           this.removeView(id)
           console.log("stream-removed remote-uid: ", id)
         });
-        // 房间有人退出
-        this.rtc.client.on("peer-leave", (evt) => {
-          const id = evt.uid;
-          if (id != this.rtc.params.uid) {
-            this.removeView(id);
-          }
-          vant.Toast("user Id:" + id + " leave");
-          console.log('peer-leave', id);
-        })
         this.rtc.client.init(this.option.appID, () => {
           console.log("init success");
-          callback();
         }, (err) => {
           console.error(err);
         });
       },
+
       changeMode() {
         if (this.rtc.published) {
           this.desktopMode = !this.desktopMode;
@@ -526,10 +518,6 @@
           this.rtc.localStream.stop();
           // Close the local stream
           this.rtc.localStream.close();
-          this.rtc.client.unpublish(this.rtc.localStream, (err) => {
-            console.log("unpublish failed")
-            console.error(err)
-          });
         }
         if (this.desktopMode) {
           this.rtc.localStream.setScreenProfile("720p_1");
@@ -537,7 +525,7 @@
         // 主播创建本地流
         this.rtc.localStream = AgoraRTC.createStream({
           streamID: this.rtc.params.uid,
-          audio: true,
+          audio: !this.desktopMode,
           video: !this.desktopMode,
           screen: this.desktopMode,
           screenAudio: this.desktopMode
@@ -551,7 +539,6 @@
             console.error(err);
           });
           this.rtc.published = true;
-          console.log('视频数量：', this.rtc.remoteStreams.length)
           if (this.rtc.remoteStreams.length > 0) {
             // Stop playing the local stream
             this.rtc.localStream.stop();
@@ -560,12 +547,12 @@
             this.rtc.client.unpublish(this.rtc.localStream, (err) => {
               console.log("unpublish failed")
               console.error(err)
-            });
+            })
             this.rtc.published = false
             vant.Dialog.alert({
               title: '共享桌面失败',
               message: '当前房间已存在一位主播'
-            });
+            })
           }
         }, (err) => {
           console.error("init local stream failed ", err);
@@ -575,28 +562,29 @@
           });
         });
       },
+
       joinRTC() {
         this.option.channel = this.roomId;
-        this.initRTC(() => {
-          // 加载直播
-          this.rtc.client.setClientRole(this.myRoom ? "host" : "audience");
-          this.rtc.client.join(this.option.token ? this.option.token : null, this.option.channel, this.option.uid ? +this.option.uid : null, (uid) => {
-            console.log("join channel: " + this.option.channel + " success, uid: " + uid);
-            this.rtc.joined = true;
-            this.rtc.params.uid = uid;
-            console.log('远程数量:', this.rtc.remoteStreams.length);
-            if (this.myRoom) {
-              this.changeMode();
-            }
-          }, (err) => {
-            console.error("client join failed", err)
-            vant.Dialog.alert({
-              title: '获取直播失败',
-              message: err
-            });
+        this.initRTC();
+        // 加载直播
+        this.rtc.client.setClientRole(this.myRoom ? "host" : "audience");
+        this.rtc.client.join(this.option.token ? this.option.token : null, this.option.channel, this.option.uid ? +this.option.uid : null, (uid) => {
+          console.log("join channel: " + this.option.channel + " success, uid: " + uid);
+          this.rtc.joined = true;
+          this.rtc.params.uid = uid;
+          console.log('远程数量:', this.rtc.remoteStreams.length);
+          if (this.myRoom) {
+            this.changeMode();
+          }
+        }, (err) => {
+          console.error("client join failed", err)
+          vant.Dialog.alert({
+            title: '获取直播失败',
+            message: err
           });
         });
       },
+
       exitRTC() {
         this.rtc.client.leave(() => {
           if (this.myRoom) {
@@ -613,10 +601,6 @@
             this.removeView(id);
           }
           console.log("client leaves channel success");
-          this.myRoom = false;
-          this.rtc.localStream = null
-          this.rtc.remoteStreams = []
-          this.rtc.client = null
           this.rtc.joined = false;
           this.rtc.published = false;
         }, (err) => {
@@ -624,6 +608,7 @@
           console.error(err);
         });
       },
+
       changeIdentify() {
         window.room.disconnect();
         this.exitRTC();

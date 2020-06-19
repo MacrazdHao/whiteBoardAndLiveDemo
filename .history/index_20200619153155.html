@@ -165,7 +165,7 @@
         <div
           style="z-index: -1;position: absolute;top:0;left:0;background-color: yellowgreen;width: 100%;height: 300px;">
           <div id="video">
-            <div class="videoBox" v-show="rtc.published">
+            <div class="videoBox" v-show="myRoom">
               <div id="local_stream" class="video-placeholder"></div>
               <div id="local_video_info" class="video-profile hide"></div>
               <div id="video_autoplay_local" class="autoplay-fallback hide"></div>
@@ -537,10 +537,10 @@
         // 主播创建本地流
         this.rtc.localStream = AgoraRTC.createStream({
           streamID: this.rtc.params.uid,
-          audio: true,
-          video: !this.desktopMode,
-          screen: this.desktopMode,
-          screenAudio: this.desktopMode
+          audio: this.myRoom,
+          video: !this.desktopMode&&this.myRoom,
+          screen: this.desktopMode&&this.myRoom,
+          screenAudio: this.desktopMode&&this.myRoom
         });
         // 初始化本地流
         this.rtc.localStream.init(() => {
@@ -552,21 +552,23 @@
           });
           this.rtc.published = true;
           console.log('视频数量：', this.rtc.remoteStreams.length)
-          if (this.rtc.remoteStreams.length > 0) {
-            // Stop playing the local stream
-            this.rtc.localStream.stop();
-            // Close the local stream
-            this.rtc.localStream.close();
-            this.rtc.client.unpublish(this.rtc.localStream, (err) => {
-              console.log("unpublish failed")
-              console.error(err)
-            });
-            this.rtc.published = false
-            vant.Dialog.alert({
-              title: '共享桌面失败',
-              message: '当前房间已存在一位主播'
-            });
-          }
+          //    标记！！
+          // if (this.rtc.remoteStreams.length > 0) {
+          //   // Stop playing the local stream
+          //   this.rtc.localStream.stop();
+          //   // Close the local stream
+          //   this.rtc.localStream.close();
+          //   this.rtc.client.unpublish(this.rtc.localStream, (err) => {
+          //     console.log("unpublish failed")
+          //     console.error(err)
+          //   });
+          //   this.rtc.published = false
+          //   vant.Dialog.alert({
+          //     title: '共享桌面失败',
+          //     message: '当前房间已存在一位主播'
+          //   });
+          // }
+
         }, (err) => {
           console.error("init local stream failed ", err);
           vant.Dialog.alert({
@@ -585,9 +587,9 @@
             this.rtc.joined = true;
             this.rtc.params.uid = uid;
             console.log('远程数量:', this.rtc.remoteStreams.length);
-            if (this.myRoom) {
+            // if (this.myRoom) {
               this.changeMode();
-            }
+            // }
           }, (err) => {
             console.error("client join failed", err)
             vant.Dialog.alert({

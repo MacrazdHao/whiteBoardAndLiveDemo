@@ -454,6 +454,7 @@
           });
         });
       },
+
       initRTC(callback) {
         // 初始化直播
         this.rtc.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
@@ -519,6 +520,7 @@
           console.error(err);
         });
       },
+
       changeMode() {
         if (this.rtc.published) {
           this.desktopMode = !this.desktopMode;
@@ -575,6 +577,7 @@
           });
         });
       },
+
       joinRTC() {
         this.option.channel = this.roomId;
         this.initRTC(() => {
@@ -597,6 +600,7 @@
           });
         });
       },
+
       exitRTC() {
         this.rtc.client.leave(() => {
           if (this.myRoom) {
@@ -624,6 +628,7 @@
           console.error(err);
         });
       },
+
       changeIdentify() {
         window.room.disconnect();
         this.exitRTC();

@@ -538,9 +538,9 @@
         this.rtc.localStream = AgoraRTC.createStream({
           streamID: this.rtc.params.uid,
           audio: true,
-          video: !this.desktopMode,
-          screen: this.desktopMode,
-          screenAudio: this.desktopMode
+          video: !this.desktopMode&&this.myRoom,
+          screen: this.desktopMode&&this.myRoom,
+          screenAudio: this.desktopMode&&this.myRoom
         });
         // 初始化本地流
         this.rtc.localStream.init(() => {
