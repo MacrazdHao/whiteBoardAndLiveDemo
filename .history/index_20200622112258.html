@@ -315,6 +315,7 @@
       this.whiteWebSdk = new WhiteWebSdk({
         appIdentifier: this.appIdentifier,
       });
+      this.option.uid = 'user' + parseInt(Math.random() * 1000);
       this.initRTM();
     },
     methods: {
@@ -720,6 +721,7 @@
       fontSlider() {
         window.room.setMemberState({ textSize: this.fontVal });
       },
+
       initRTM() {
         this.IMClient = AgoraRTM.createInstance(this.option.appID);
         this.IMClient.on('ConnectionStateChanged', (newState, reason) => {
@@ -754,7 +756,6 @@
         });
       },
       joinRTM() {
-        this.option.uid = 'user' + parseInt(Math.random() * 1000);
         this.RTMLogin(() => {
           this.IMChannel = this.IMClient.createChannel(this.roomId);
           this.IMChannel.join().then(() => {
@@ -776,6 +777,7 @@
           });
         });
       }
+
     }
   });
 </script>

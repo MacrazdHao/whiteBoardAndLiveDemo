@@ -19,8 +19,6 @@
 
   .chatBox {
     padding: 10px 16px;
-    max-height: 300px;
-    overflow-y: auto;
   }
 
   .chatItem p {
@@ -130,10 +128,10 @@
             this.IMChannel.on('ChannelMessage', ({ text }, senderId) => { // text 为收到的频道消息文本，senderId 为发送方的 User ID
               /* 收到频道消息的处理逻辑 */
               console.log('Got a channel message from' + senderId + ': ' + text);
-              let tmp = [...this.records, {
+              let tmp = [{
                 account: senderId,
                 text
-              }];
+              }, ...this.records];
               this.records = tmp;
             });
           }).catch(error => {
@@ -147,10 +145,10 @@
           /* 频道消息发送成功的处理逻辑 */
           console.log('send message success');
           console.log('you sent a message: ' + this.message);
-          let tmp = [...this.records, {
-            account: this.option.uid,
-            text: this.message
-          }];
+          let tmp = [{
+            account: senderId,
+            text
+          }, ...this.records];
           this.records = tmp;
         }).catch(error => {
           /* 频道消息发送失败的处理逻辑 */
@@ -159,7 +157,6 @@
       },
       changeIdentify() {
         this.myRoom = !this.myRoom;
-        this.RTMLogout();
         this.exitRoom();
         this.joinRoom();
       },
