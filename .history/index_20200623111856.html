@@ -144,12 +144,6 @@
   .chatItem p {
     margin: 0;
   }
-
-  .pptBtnBox {
-    padding: 10px 16px;
-    display: flex;
-    justify-content: flex-end;
-  }
 </style>
 
 <body>
@@ -187,30 +181,6 @@
               <div id="video_autoplay_local" class="autoplay-fallback hide"></div>
             </div>
           </div>
-        </div>
-        <div class="pptBtnBox" v-if="roomName&&myRoom">
-          <van-popup v-model="showBoardPicker" round position="bottom">
-            <van-picker :default-index="boardSceneIndex" title="选择场景" show-toolbar :columns="boardScene"
-              @confirm="boardScenePicker" @cancel="showBoardPicker=false" />
-          </van-popup>
-          <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" />
-          <van-button style="padding: 0 10px;" size="mini" type="primary" @click="">上传PPT</van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadImg">载入图片</van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary" @click="showBoardPicker=true">选择场景
-          </van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary"
-            @click="changeBoardScene(boardScene[boardSceneIndex], 1)" :disabled="boardSceneImgIndex==1">第一张</van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary"
-            @click="changeBoardScene(boardScene[boardSceneIndex], --boardSceneImgIndex)"
-            :disabled="boardSceneImgIndex==1">上一张
-          </van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary"
-            @click="changeBoardScene(boardScene[boardSceneIndex], ++boardSceneImgIndex)"
-            :disabled="boardSceneLength<=boardSceneImgIndex">下一张</van-button>
-          <van-button style="padding: 0 10px;" size="mini" type="primary"
-            @click="changeBoardScene(boardScene[boardSceneIndex], boardSceneLength)"
-            :disabled="boardSceneLength<=boardSceneImgIndex">
-            最后一张</van-button>
         </div>
       </div>
       <div v-if="roomName&&myRoom">
@@ -313,16 +283,6 @@
         sdkToken:
           "NETLESSSDK_YWs9T2VYYWNoeG5DbjNIcUI4MSZub25jZT0xNTkyMzYyMDQ1MzA0MDAmcm9sZT0wJnNpZz0yYTc5OGQyNzFjOGFhMDIxZTM0NWI5MmE2YjY0ZjI2Y2I3YWViYjQ1MTY2MzFiNDJjYzdkYmMwYWY1NWY1N2Fi",
         appIdentifier: "_4hHALBDEeqXLmEdE6HRLQ/_ODxqJt7hbHw9g",
-        showBoardPicker: false,
-        boardScene: ['init'],
-        boardSceneImgList: [[]],
-        boardSceneIndex: 0,
-        boardSceneImgIndex: 1,
-        boardSceneLength: 0,
-        boardImgInfo: {
-          width: 0,
-          height: 0
-        },
         jRoomId: '',
         jRoomName: '',
         roomName: '',
@@ -419,7 +379,6 @@
         });
       },
       createRoom() {
-        if (this.rtc.joined) this.exitRoom();
         if (!this.jRoomName) {
           vant.Dialog.alert({ title: '创建失败', message: '请输入房间名' })
           return;
@@ -500,7 +459,7 @@
             this.roomId = this.jRoomId;
             room.bindHtmlElement(document.getElementById("whiteboard"));
 
-            // this.loadBoardPPT();
+            this.loadBoardPPT();
 
             // 加入直播
             this.joinRTC();
@@ -698,55 +657,33 @@
       },
       changeIdentify() {
         window.room.disconnect();
-
-        this.rtc.client.leave(() => {
-          if (this.myRoom) {
-            // Stop playing the local stream
-            this.rtc.localStream.stop();
-            // Close the local stream
-            this.rtc.localStream.close();
-          }
-          // Stop playing the remote streams and remove the views
-          while (this.rtc.remoteStreams.length > 0) {
-            let stream = this.rtc.remoteStreams.shift();
-            let id = stream.getId();
-            stream.stop();
-            this.removeView(id);
-          }
-          console.log("client leaves channel success");
-          this.rtc.localStream = null
-          this.rtc.remoteStreams = []
-          this.rtc.client = null
-          this.rtc.joined = false;
-          this.rtc.published = false;
-          this.RTMLogout();
-          this.myRoom = !this.myRoom;
-          let joinRoomParams = {
-            uuid: this.jRoomId,
-            roomToken: this.roomToken,
-            isWritable: this.myRoom
-          };
-          this.whiteWebSdk.joinRoom(joinRoomParams).then((room) => {
-            // 加入房间成功，获取 room 对象
-            // 并将之前的 <div id="whiteboard"/> 占位符变成白板
-            window.room = room;
-            this.roomId = this.jRoomId;
-            room.bindHtmlElement(document.getElementById("whiteboard"));
-            this.joinRTC();
-            this.joinRTM();
-          }).catch((err) => {
-            // 加入房间失败
-            console.error(err);
-            this.roomId = '';
-            this.roomName = '';
-            vant.Dialog.alert({
-              title: '加入房间失败',
-              message: err
-            });
-          });
-        }, (err) => {
-          console.log("channel leave failed");
+        this.exitRTC();
+        this.RTMLogout();
+        this.myRoom = !this.myRoom;
+        let joinRoomParams = {
+          uuid: this.jRoomId,
+          roomToken: this.roomToken,
+          isWritable: this.myRoom
+        };
+        this.whiteWebSdk.joinRoom(joinRoomParams).then((room) => {
+          // 加入房间成功，获取 room 对象
+          // 并将之前的 <div id="whiteboard"/> 占位符变成白板
+          // this.room = room;
+          // console.log(room)
+          window.room = room;
+          this.roomId = this.jRoomId;
+          room.bindHtmlElement(document.getElementById("whiteboard"));
+          this.joinRTC();
+          this.joinRTM();
+        }).catch((err) => {
+          // 加入房间失败
           console.error(err);
+          this.roomId = '';
+          this.roomName = '';
+          vant.Dialog.alert({
+            title: '加入房间失败',
+            message: err
+          });
         });
       },
       exitRoom() {
@@ -848,68 +785,24 @@
             name: '' + (index + 1),
             ppt: {
               src: url,
-              ...this.boardImgInfo
+              width: 1024,
+              height: 768,
             },
           };
         });
         // 添加白板场景
         window.room.putScenes("/" + sceneName, scenes);
       },
-      changeBoardScene(sceneName, pageIndex = 1) {
-        console.log('看这里！！', sceneName, pageIndex)
-        this.boardSceneImgIndex = pageIndex;
+      changeBoardImg(sceneName, pageIndex) {
         // 切换白板场景
-        if (!this.boardScene.includes(sceneName)) this.boardScene.push(sceneName);
-        let boardScene = sceneName == 'init' ? '/init' : ("/" + sceneName + "/" + pageIndex);
-        window.room.setScenePath(boardScene);
+        window.room.setScenePath("/" + sceneName + pageIndex ? ("/" + pageIndex) : "");
       },
       loadBoardPPT() {
-        let imgList = [
+        this.addImgSceneInBoard('test', [
           'https://himg.baidu.com/sys/portrait/item/tb.1.e4d75866.01mE0Pb5VmI5tu1xF_FU2w',
           'https://himg.baidu.com/sys/portrait/item/tb.1.a150f6d8.qRVQEk3q5j7bwig-rF6Y9A'
-        ];
-        this.boardSceneImgList.push(imgList);
-        this.boardSceneIndex = this.boardSceneImgList.length - 1;
-        this.addImgSceneInBoard('test', imgList);
-        this.boardSceneLength = imgList.length;
-        this.changeBoardScene('test', 1);
-      },
-      boardScenePicker(val, index) {
-        console.log('看这里！！！！！！', val, index);
-        this.changeBoardScene(val);
-        this.boardSceneIndex = index;
-        this.boardSceneLength = this.boardSceneImgList[index].length;
-        this.showBoardPicker = false;
-      },
-      getLocalImg(e) {
-        let file = e.target;
-        let fileName = e.target.files[0].name;
-        console.log('在这儿1', e.target.files[0]);
-        if (!file.files || !file.files[0]) {
-          return;
-        }
-        let reader = new FileReader();
-        reader.onload = (evt) => {
-          let image = [evt.target.result];
-          let oImg = new Image();
-          oImg.src = image[0];
-          document.body.appendChild(oImg);
-          oImg.onload = () => {
-            this.boardImgInfo = { width: oImg.offsetWidth / 10, height: oImg.offsetHeight / 10 };
-            document.body.removeChild(oImg);
-          };
-          this.boardSceneImgList.push(image);
-          this.boardSceneIndex = this.boardSceneImgList.length - 1;
-          this.addImgSceneInBoard(fileName, image);
-          this.boardSceneLength = image.length;
-          this.changeBoardScene(fileName, 1);
-          console.log('在这儿2', evt);
-        }
-        reader.readAsDataURL(file.files[0]);
-        this.$refs.imgLoad.value = '';
-      },
-      uploadImg() {
-        this.$refs.imgLoad.click();
+        ]);
+        // this.changeBoardImg('test', 1);
       }
     }
   });

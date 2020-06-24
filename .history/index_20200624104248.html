@@ -697,56 +697,30 @@
         });
       },
       changeIdentify() {
-        window.room.disconnect();
-
-        this.rtc.client.leave(() => {
-          if (this.myRoom) {
-            // Stop playing the local stream
-            this.rtc.localStream.stop();
-            // Close the local stream
-            this.rtc.localStream.close();
-          }
-          // Stop playing the remote streams and remove the views
-          while (this.rtc.remoteStreams.length > 0) {
-            let stream = this.rtc.remoteStreams.shift();
-            let id = stream.getId();
-            stream.stop();
-            this.removeView(id);
-          }
-          console.log("client leaves channel success");
-          this.rtc.localStream = null
-          this.rtc.remoteStreams = []
-          this.rtc.client = null
-          this.rtc.joined = false;
-          this.rtc.published = false;
-          this.RTMLogout();
-          this.myRoom = !this.myRoom;
-          let joinRoomParams = {
-            uuid: this.jRoomId,
-            roomToken: this.roomToken,
-            isWritable: this.myRoom
-          };
-          this.whiteWebSdk.joinRoom(joinRoomParams).then((room) => {
-            // 加入房间成功，获取 room 对象
-            // 并将之前的 <div id="whiteboard"/> 占位符变成白板
-            window.room = room;
-            this.roomId = this.jRoomId;
-            room.bindHtmlElement(document.getElementById("whiteboard"));
-            this.joinRTC();
-            this.joinRTM();
-          }).catch((err) => {
-            // 加入房间失败
-            console.error(err);
-            this.roomId = '';
-            this.roomName = '';
-            vant.Dialog.alert({
-              title: '加入房间失败',
-              message: err
-            });
-          });
-        }, (err) => {
-          console.log("channel leave failed");
+        this.exitRoom();
+        this.myRoom = !this.myRoom;
+        let joinRoomParams = {
+          uuid: this.jRoomId,
+          roomToken: this.roomToken,
+          isWritable: this.myRoom
+        };
+        this.whiteWebSdk.joinRoom(joinRoomParams).then((room) => {
+          // 加入房间成功，获取 room 对象
+          // 并将之前的 <div id="whiteboard"/> 占位符变成白板
+          window.room = room;
+          this.roomId = this.jRoomId;
+          room.bindHtmlElement(document.getElementById("whiteboard"));
+          this.joinRTC();
+          this.joinRTM();
+        }).catch((err) => {
+          // 加入房间失败
           console.error(err);
+          this.roomId = '';
+          this.roomName = '';
+          vant.Dialog.alert({
+            title: '加入房间失败',
+            message: err
+          });
         });
       },
       exitRoom() {
