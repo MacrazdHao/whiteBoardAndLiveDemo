@@ -375,14 +375,12 @@
       this.initRTM();
     },
     methods: {
-      // 新建节点
       createElement(tag, id, className) {
         let el = document.createElement(tag);
         el.id = id;
         el.className = className;
         return el;
       },
-      // 添加远程RTC窗口
       addView(id, show) {
         if (!document.getElementById(id)) {
           let videoDiv = document.getElementById("video");
@@ -399,14 +397,12 @@
           remote_video_panel.append(video_autoplay);
         }
       },
-      // 移除远程RTC窗口
       removeView(id) {
         let remote_video_panel = document.getElementById("remote_video_panel_" + id);
         if (remote_video_panel) {
           remote_video_panel.remove();
         }
       },
-      // 从房间列表进入房间
       joinRoomFromList(item) {
         console.log(item);
         this.jRoomName = item.name;
@@ -414,7 +410,6 @@
         this.joinRoom();
         this.showRoomList = false;
       },
-      // 获取房间列表
       getRoomList() {
         this.showRoomList = true;
         // 构造创建房间的 Request
@@ -440,7 +435,6 @@
           });
         });
       },
-      // 创建房间
       createRoom() {
         if (this.rtc.joined) this.exitRoom();
         if (!this.jRoomName) {
@@ -479,7 +473,6 @@
           });
         });
       },
-      // 加入房间
       joinRoom() {
         if (this.rtc.joined) this.exitRoom();
         // 构造申请 Room Token 的 Request
@@ -550,7 +543,6 @@
           });
         });
       },
-      // 初始化RTC对象
       initRTC(callback) {
         // 初始化直播
         this.rtc.client = AgoraRTC.createClient({ mode: "live", codec: "h264" });
@@ -616,7 +608,6 @@
           console.error(err);
         });
       },
-      // 更换RTC模式（视频直播 / 共享桌面）
       changeMode() {
         if (this.rtc.published) {
           this.desktopMode = !this.desktopMode;
@@ -673,7 +664,6 @@
           });
         });
       },
-      // 接入RTC流（房间）
       joinRTC() {
         this.option.channel = this.roomId;
         this.initRTC(() => {
@@ -696,7 +686,6 @@
           });
         });
       },
-      // 断开RTC流（房间）
       exitRTC() {
         this.rtc.client.leave(() => {
           if (this.myRoom) {
@@ -724,7 +713,6 @@
           console.error(err);
         });
       },
-      // 更换身份（主播/观众）测试用
       changeIdentify() {
         window.room.disconnect();
         this.initSceneOptions();
@@ -778,7 +766,6 @@
           console.error(err);
         });
       },
-      // 退出房间
       exitRoom() {
         this.roomId = '';
         this.roomName = '';
@@ -787,7 +774,6 @@
         this.RTMLogout();
         this.initSceneOptions();
       },
-      // 更换教具
       toolMenu(index) {
         console.log(index);
         this.toolIndex = index;
@@ -802,7 +788,6 @@
           case 7: window.room.setMemberState({ currentApplianceName: "arrow" }); break;
         }
       },
-      // 更换教具颜色
       colorMenu(index) {
         console.log(index);
         switch (index) {
@@ -813,22 +798,18 @@
           case 4: window.room.setMemberState({ strokeColor: [255, 255, 0] }); break;
         }
       },
-      // 更换画笔宽度
       widthSlider() {
         window.room.setMemberState({ strokeWidth: this.widthVal });
       },
-      // 更换文字大小
       fontSlider() {
         window.room.setMemberState({ textSize: this.fontVal });
       },
-      // 初始化RTM对象
       initRTM() {
         this.IMClient = AgoraRTM.createInstance(this.option.appID);
         this.IMClient.on('ConnectionStateChanged', (newState, reason) => {
           console.log('on connection state changed to ' + newState + ' reason: ' + reason);
         });
       },
-      // RTM用户登入
       RTMLogin(callback) {
         this.IMClient.login({ token: this.option.token, uid: this.option.uid }).then(() => {
           console.log('AgoraRTM client login success');
@@ -837,12 +818,10 @@
           console.log('AgoraRTM client login failure', error);
         });
       },
-      // RTM用户登出（断开RTM流）
       RTMLogout() {
         this.IMClient.logout();
         this.joinIM = false;
       },
-      // RTM发送消息
       sendMessage() {
         this.IMChannel.sendMessage({ text: this.message }).then(() => {
           /* 频道消息发送成功的处理逻辑 */
@@ -858,7 +837,6 @@
           console.log('send message failed', error);
         });
       },
-      // 接入RTM流（房间）
       joinRTM() {
         this.option.uid = 'user' + parseInt(Math.random() * 1000);
         this.RTMLogin(() => {
@@ -882,7 +860,6 @@
           });
         });
       },
-      // 添加白板场景
       addImgSceneInBoard(sceneName, imgsList) {
         let scenes = imgsList.map((item, index) => {
           return {
@@ -897,7 +874,6 @@
         // 添加白板场景
         window.room.putScenes("/" + sceneName, scenes);
       },
-      // 更换白板场景
       changeBoardScene(sceneName, pageIndex = 1) {
         console.log('看这里！！', sceneName, pageIndex)
         this.boardSceneImgIndex = pageIndex;
@@ -906,7 +882,6 @@
         let boardScene = sceneName == 'init' ? '/init' : ("/" + sceneName + "/" + pageIndex);
         window.room.setScenePath(boardScene);
       },
-      // 上传PPT并新建场景
       loadBoardPPT(e) {
         vant.Toast.loading({
           message: '上传中...',
@@ -943,7 +918,6 @@
           vant.Toast.fail("上传失败，请重试！");
         });
       },
-      // 历史场景选择器控制器
       boardScenePicker(val, index) {
         console.log('看这里！！！！！！', val, index);
         this.changeBoardScene(val);
@@ -951,7 +925,6 @@
         this.boardSceneLength = this.boardSceneImgList[index].length;
         this.showBoardPicker = false;
       },
-      // 上传单张图片并新建场景
       getLocalImg(e) {
         let file = e.target;
         let fileName = e.target.files[0].name;
@@ -983,15 +956,12 @@
         reader.readAsDataURL(file.files[0]);
         this.$refs.imgLoad.value = '';
       },
-      // 图片文件选择控制器
       uploadImg() {
         this.$refs.imgLoad.click();
       },
-      // PPT文件选择控制器
       uploadPPT() {
         this.$refs.pptLoad.click();
       },
-      // 重新初始化场景配置信息
       initSceneOptions() {
         this.boardScene = ['init'];
         this.boardSceneImgList = [[]];
