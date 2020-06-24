@@ -204,8 +204,8 @@
             <van-progress style="margin: auto;" :percentage="pptUploadProgress" />
           </div> -->
           <div>
-            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" type="image" accept="image/gif,image/jpeg,image/jpg,image/png,image/svg" />
-            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" accept=".ppt,.pdf,.pptx" />
+            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" />
+            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" />
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadPPT">上传PPT</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadImg">载入图片</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="showBoardPicker=true">选择场景
@@ -301,7 +301,6 @@
           @click="joinRoomFromList(item)" />
       </van-list>
     </div>
-    <div id="imgBuffer" v-show="false"></div>
   </div>
 </body>
 <script src="https://unpkg.com/vue/dist/vue.js"></script>
@@ -935,7 +934,7 @@
           let image = evt.target.result;
           let oImg = new Image();
           oImg.src = image;
-          document.getElementById("imgBuffer").appendChild(oImg);
+          document.body.appendChild(oImg);
           oImg.onload = () => {
             this.boardImgInfo = { width: oImg.offsetWidth / 10, height: oImg.offsetHeight / 10 };
             document.body.removeChild(oImg);

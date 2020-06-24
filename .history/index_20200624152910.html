@@ -148,14 +148,12 @@
   .pptBtnBox {
     padding: 10px 16px;
     display: flex;
-    /* justify-content: space-between; */
-    justify-content: flex-end;
+    justify-content: space-between;
   }
 
   .uploadProgressBox {
-    width: 50%;
-    margin: auto;
-    margin-left: 0;
+    /* width: 50%;
+    display: flex; */
   }
 </style>
 
@@ -200,12 +198,12 @@
             <van-picker :default-index="boardSceneIndex" title="选择场景" show-toolbar :columns="boardScene"
               @confirm="boardScenePicker" @cancel="showBoardPicker=false" />
           </van-popup>
-          <!-- <div class="uploadProgressBox">
+          <div class="uploadProgressBox">
             <van-progress style="margin: auto;" :percentage="pptUploadProgress" />
-          </div> -->
+          </div>
           <div>
-            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" type="image" accept="image/gif,image/jpeg,image/jpg,image/png,image/svg" />
-            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" accept=".ppt,.pdf,.pptx" />
+            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" />
+            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" />
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadPPT">上传PPT</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadImg">载入图片</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="showBoardPicker=true">选择场景
@@ -301,7 +299,6 @@
           @click="joinRoomFromList(item)" />
       </van-list>
     </div>
-    <div id="imgBuffer" v-show="false"></div>
   </div>
 </body>
 <script src="https://unpkg.com/vue/dist/vue.js"></script>
@@ -329,7 +326,7 @@
           "NETLESSSDK_YWs9T2VYYWNoeG5DbjNIcUI4MSZub25jZT0xNTkyMzYyMDQ1MzA0MDAmcm9sZT0wJnNpZz0yYTc5OGQyNzFjOGFhMDIxZTM0NWI5MmE2YjY0ZjI2Y2I3YWViYjQ1MTY2MzFiNDJjYzdkYmMwYWY1NWY1N2Fi",
         appIdentifier: "_4hHALBDEeqXLmEdE6HRLQ/_ODxqJt7hbHw9g",
         showBoardPicker: false,
-        // pptUploadProgress: 0,
+        pptUploadProgress: 0,
         boardScene: ['init'],
         boardSceneImgList: [[]],
         boardSceneIndex: 0,
@@ -859,13 +856,12 @@
         });
       },
       addImgSceneInBoard(sceneName, imgsList) {
-        let scenes = imgsList.map((item, index) => {
+        let scenes = imgsList.map((url, index) => {
           return {
             name: '' + (index + 1),
             ppt: {
-              src: item.url,
-              width: item.width,
-              height: item.height,
+              src: url,
+              ...this.boardImgInfo
             },
           };
         });
@@ -881,11 +877,6 @@
         window.room.setScenePath(boardScene);
       },
       loadBoardPPT(e) {
-        vant.Toast.loading({
-          message: '上传中...',
-          forbidClick: true,
-          duration: 0
-        });
         let file = e.target;
         let fileName = e.target.files[0].name;
         console.log('在这儿1', e.target.files[0]);
@@ -906,14 +897,9 @@
           console.log('ppt上传结果', res);
           this.boardSceneImgList.push(res);
           this.boardSceneIndex = this.boardSceneImgList.length - 1;
-          this.addImgSceneInBoard(fileName, res);
+          this.addImgSceneInBoard('test', res);
           this.boardSceneLength = res.length;
-          this.changeBoardScene(fileName, 1);
-          vant.Toast.clear();
-          vant.Toast.success("上传成功");
-        }).catch((err)=>{
-          console.log('上传ppt出错', err);
-          vant.Toast.fail("上传失败，请重试！");
+          this.changeBoardScene('test', 1);
         });
       },
       boardScenePicker(val, index) {
@@ -932,18 +918,14 @@
         }
         let reader = new FileReader();
         reader.onload = (evt) => {
-          let image = evt.target.result;
+          let image = [evt.target.result];
           let oImg = new Image();
-          oImg.src = image;
-          document.getElementById("imgBuffer").appendChild(oImg);
+          oImg.src = image[0];
+          document.body.appendChild(oImg);
           oImg.onload = () => {
             this.boardImgInfo = { width: oImg.offsetWidth / 10, height: oImg.offsetHeight / 10 };
             document.body.removeChild(oImg);
           };
-          image = [{
-            url: image,
-            ...this.boardImgInfo
-          }]
           this.boardSceneImgList.push(image);
           this.boardSceneIndex = this.boardSceneImgList.length - 1;
           this.addImgSceneInBoard(fileName, image);

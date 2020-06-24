@@ -204,8 +204,8 @@
             <van-progress style="margin: auto;" :percentage="pptUploadProgress" />
           </div> -->
           <div>
-            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" type="image" accept="image/gif,image/jpeg,image/jpg,image/png,image/svg" />
-            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" accept=".ppt,.pdf,.pptx" />
+            <input ref="imgLoad" type="file" @change="getLocalImg" v-show="false" type="image" />
+            <input ref="pptLoad" type="file" @change="loadBoardPPT" v-show="false" />
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadPPT">上传PPT</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="uploadImg">载入图片</van-button>
             <van-button style="padding: 0 10px;" size="mini" type="primary" @click="showBoardPicker=true">选择场景
